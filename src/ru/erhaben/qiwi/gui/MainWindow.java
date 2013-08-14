@@ -1,0 +1,243 @@
+package ru.erhaben.qiwi.gui;
+
+import java.awt.Dimension;
+import java.awt.SystemTray;
+import java.awt.Toolkit;
+import java.awt.Image;
+import java.awt.PopupMenu;
+import java.awt.MenuItem;
+import java.awt.TrayIcon;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import ru.erhaben.qiwi.daemon.DaemonController;
+import org.jachievement.AchievementQueue;
+import org.jachievement.Achievement;
+import org.jachievement.AchievementConfig;
+import java.awt.Color;
+import javax.swing.ImageIcon;
+import javax.swing.UIManager;
+import ru.erhaben.qiwi.misc.Registry;
+import ru.erhaben.qiwi.misc.Log;
+
+public class MainWindow extends javax.swing.JFrame {
+    /* Все что касается трея */
+    private SystemTray tray = null;
+    
+    /* Контроллер и уведомления */
+    AchievementQueue messages_queue = new AchievementQueue();
+    DaemonController controller;
+    
+    /**
+     * Creates new form MainWindow
+     */
+    public MainWindow() {
+        initComponents();
+        
+        /* Для нормального расположения окна */
+        Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+    
+        // Determine the new location of the window
+        int w = this.getSize().width;
+        int h = this.getSize().height;
+        int x = (dim.width-w)/2;
+        int y = (dim.height-h)/2;
+
+        // Move the window
+        this.setLocation(x, y);
+        
+        this.setResizable(false);
+        
+        /* Готовлю трей */
+        if (SystemTray.isSupported()) {
+            this.setUpTray();
+        } 
+        
+        // Выставляю ссылку на окно
+        Registry.getInstance().window = this;
+        // Создаю экземпляр контроллера
+        this.controller = new DaemonController();
+        this.setIconImage(new ImageIcon(System.getProperty("user.dir") + "/" + "eye.png").getImage());
+    }
+    
+    // Настройка иконки в трее
+    private void setUpTray(){
+        ActionListener listener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (Registry.getInstance().window.isVisible()){
+                    Registry.getInstance().window.setVisible(false);
+                } else {
+                    Registry.getInstance().window.setVisible(true);
+                }
+            }
+        };
+
+       TrayIcon trayIcon = null;
+       this.tray = SystemTray.getSystemTray();
+       ImageIcon icon = new ImageIcon(System.getProperty("user.dir") + "/" + "eye.png");
+       ImageIcon resized = ru.erhaben.qiwi.misc.Picture.resizeIcon(icon, 17, 17);
+       
+       //Image image = Toolkit.getDefaultToolkit().getImage(System.getProperty("user.dir") + "/" + "eye.png");
+
+       trayIcon = new TrayIcon(resized.getImage(), "Qiwi");
+       trayIcon.addActionListener(listener);
+       try {
+        tray.add(trayIcon);
+       } catch (Exception e) {
+           Log.getInstance().write("main_window", "exception while creating tray icon", e.toString());
+       }
+       
+       //this.setState(javax.swing.JFrame.ICONIFIED);                                       
+    }
+ 
+    // Отобразить сообщение в левом верхнем углу экрана
+    public void displayMessage(String message){
+        try{
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception ex){
+            Log.getInstance().write("main_window", "exception while displaying message", ex.toString());
+        }       
+
+        AchievementConfig config = new AchievementConfig();
+        config.setBackgroundColor(Color.WHITE);
+        config.setTitleColor(Color.BLACK);
+        config.setDescriptionColor(Color.RED);
+        config.setBorderColor(Color.BLACK);
+        config.setIcon(null);
+        config.setInDuration(100);
+        config.setOutDuration(100);
+        config.setAudioEnabled(true);
+        
+        Achievement a = new Achievement("Qiwi", message, config);
+        this.messages_queue.add(a);
+    }
+    
+    // Показать в окне что с соединением все Ок
+    public void showConnectionOn(){
+        this.labelConnectionStatus.setText("<html>Подключение к серверу: <font color='green'>подключен</font></html>");
+    }
+    
+    // Показать в окне что с соединение прервано
+    public void showConnectionOff(){
+        this.labelConnectionStatus.setText("<html>Подключение к серверу: <font color='red'>отключен</font></html>");
+    }
+
+    // Показать в окне что номер терминала
+    public void showTerminalID(String id){
+        this.textTerminalID.setText(id);
+    }
+            
+    // Добавить строку в поле лога в окне
+    public void appendTextToLogArea(String text){
+        if (this.textLog.getLineCount() >= 200){
+            this.textLog.setText("");
+        }
+        
+        this.textLog.append(text + "\r\n");
+    }
+    
+    
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        labelConnectionStatus = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        textTerminalID = new javax.swing.JTextField();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        textLog = new javax.swing.JTextArea();
+
+        setTitle("Qiwi");
+        setAlwaysOnTop(true);
+
+        labelConnectionStatus.setText("Подключение");
+
+        jLabel2.setText("№ терминала");
+
+        textTerminalID.setEditable(false);
+        textTerminalID.setText("0");
+
+        textLog.setEditable(false);
+        textLog.setColumns(20);
+        textLog.setRows(5);
+        jScrollPane1.setViewportView(textLog);
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(labelConnectionStatus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 417, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel2)
+                        .addGap(99, 99, 99)
+                        .addComponent(textTerminalID)))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(labelConnectionStatus)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel2)
+                    .addComponent(textTerminalID, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 443, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String args[]) {
+        /* Set the Nimbus look and feel */
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         */
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (ClassNotFoundException ex) {
+            java.util.logging.Logger.getLogger(MainWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (InstantiationException ex) {
+            java.util.logging.Logger.getLogger(MainWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            java.util.logging.Logger.getLogger(MainWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(MainWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        }
+        //</editor-fold>
+
+        /* Create and display the form */
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                new MainWindow().setVisible(false);
+            }
+        });
+    }
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel labelConnectionStatus;
+    private javax.swing.JTextArea textLog;
+    private javax.swing.JTextField textTerminalID;
+    // End of variables declaration//GEN-END:variables
+}
